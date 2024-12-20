@@ -1,27 +1,42 @@
 <?php
-function test() {
-    echo "This is a test to make sure PHP is downloaded properly and works";
+include 'credentials.php';
+
+function curl_get_contents($url)
+{
+    $ch = curl_init();
+
+    //curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    if(curl_exec($ch) === false)
+    {
+        throw new Exception('Curl error: '.curl_error($ch), 1);
+    }
+    $data = curl_exec($ch);
+    curl_close($ch);
+    return $data;
 }
 
-test();
+$response = curl_get_contents('https://hackattic.com/challenges/backup_restore/problem?access_token=' . $token);
+$decoded_json = json_decode($response, true);
 
-$url = "https://sampleapis.com/";
-$curl = curl_init($url);
-if($curl) {
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, True);
-    $response = curl_exec($curl);
-    curl_close($curl);
-    echo $response;
+//echo var_dump($decoded_json["dump"]) . "<br>\r\n";
+$input = base64_decode($decoded_json["dump"], true);
+//echo $input;
+
+$servername = "localhost";
+$username = $myusername;
+$dbname = "hackattic_db_restore";
+
+try {
+  $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username);
+  // set the PDO error mode to exception
+  $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  echo "Connected successfully";
+} catch(PDOException $e) {
+  echo "Connection failed: " . $e->getMessage();
 }
-else {
-    echo "Could not run";
-}
-if(curl_exec($curl) === false)
-{
-    echo 'Curl error: ' . curl_error($curl);
-}
-else
-{
-    echo 'Operation completed without any errors, you have the response';
-}
+$conn = null;
+
 ?>
